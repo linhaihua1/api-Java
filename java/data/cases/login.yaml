@@ -1,0 +1,13 @@
+cases:
+  - id: 1001
+    title: 登录并提取票据
+    tags: [ smoke ]
+    url: /v1/users/login
+    method: get
+    headers: { "Content-Type": "application/json" }
+    request_body:
+      username: demo_user
+      password: demo_password
+    relation: ticket=body.data.ticket
+    expected_code: 200
+    expects: "type:body.data=dict; not_empty:body.data.ticket"
