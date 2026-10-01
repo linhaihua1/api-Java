@@ -1,0 +1,27 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# Build
+target/
+build/
+*.class
+
+# Logs
+log/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# Local config overrides
+config/local.ini
