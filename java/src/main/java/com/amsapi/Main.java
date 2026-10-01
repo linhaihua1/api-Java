@@ -1,5 +1,6 @@
 package com.amsapi;
 
+import com.amsapi.common.Constants;
 import com.amsapi.common.profile.SystemProfile;
 import com.amsapi.common.variable.GlobalVar;
 import com.amsapi.config.Settings;
@@ -29,7 +30,7 @@ import static org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder.r
  */
 public class Main {
 
-    private static final String[] VALID_REPORT_TYPES = {"allure", "html", "both", "none"};
+    private static final String[] VALID_REPORT_TYPES = Constants.VALID_REPORT_TYPES;
 
     public static void main(String[] args) {
         // 初始化日志

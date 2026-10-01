@@ -1,5 +1,6 @@
 package com.amsapi.common.profile;
 
+import com.amsapi.common.Constants;
 import com.amsapi.common.auth.AuthFactory;
 import com.amsapi.common.auth.AuthStrategy;
 import com.amsapi.common.base.Base;
@@ -71,7 +72,7 @@ public class SystemProfile {
         this.verify = envSec.get("verify");
         this.encoding = (envSec.getOrDefault("encoding", "")).trim().isEmpty() ? null : envSec.get("encoding").trim();
         this.contentType = (envSec.getOrDefault("content_type", "")).trim().isEmpty() ? null : envSec.get("content_type").trim();
-        this.responseFormat = (envSec.getOrDefault("response_format", "auto")).trim().toLowerCase();
+        this.responseFormat = (envSec.getOrDefault("response_format", Constants.DEFAULT_RESPONSE_FORMAT)).trim().toLowerCase();
 
         // headers (保留大小写)
         this.headers = new LinkedHashMap<>();
@@ -151,7 +152,7 @@ public class SystemProfile {
 
     public String getResponseFormat() {
         String v = envValue("response_format");
-        return (v != null ? v : (responseFormat != null ? responseFormat : "auto")).toLowerCase();
+        return (v != null ? v : (responseFormat != null ? responseFormat : Constants.DEFAULT_RESPONSE_FORMAT)).toLowerCase();
     }
 
     public int getTimeout() {
@@ -257,8 +258,8 @@ public class SystemProfile {
     public static SystemProfile loadProfile(String system, boolean force) {
         String name = (system != null && !system.isEmpty()) ? system.trim()
                 : (Settings.RunConfig.SYSTEM != null && !Settings.RunConfig.SYSTEM.isEmpty()
-                ? Settings.RunConfig.SYSTEM.trim() : "default");
-        if (name.isEmpty()) name = "default";
+                ? Settings.RunConfig.SYSTEM.trim() : Constants.DEFAULT_SYSTEM);
+        if (name.isEmpty()) name = Constants.DEFAULT_SYSTEM;
 
         if (!force && CACHE.containsKey(name)) {
             return CACHE.get(name);
@@ -268,7 +269,7 @@ public class SystemProfile {
         Map<String, Map<String, String>> data;
         if (path.exists()) {
             data = IniParser.read(path.toPath());
-        } else if ("default".equals(name)) {
+        } else if (Constants.DEFAULT_SYSTEM.equals(name)) {
             data = new LinkedHashMap<>();
         } else {
             throw new ConfigError("未找到系统适配档案 '" + name + "。\n" +

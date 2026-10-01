@@ -1,5 +1,6 @@
 package com.amsapi.common.auth;
 
+import com.amsapi.common.Constants;
 import com.amsapi.config.Settings;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -63,7 +64,7 @@ public class OAuth2ClientCredentials extends AuthStrategy {
         if (!scope.isEmpty()) payload.put("scope", scope);
 
         HttpPost post = new HttpPost(tokenUrl);
-        post.setHeader("Content-Type", "application/json");
+        post.setHeader(Constants.HDR_CONTENT_TYPE, Constants.CT_JSON);
 
         if ("basic".equals(authMode)) {
             String raw = clientId + ":" + clientSecret;

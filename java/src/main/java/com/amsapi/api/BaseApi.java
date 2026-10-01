@@ -1,5 +1,6 @@
 package com.amsapi.api;
 
+import com.amsapi.common.Constants;
 import com.amsapi.common.asserts.Asserts;
 import com.amsapi.common.base.Base;
 import com.amsapi.common.auth.AuthStrategy;
@@ -32,7 +33,7 @@ import java.util.*;
  */
 public class BaseApi {
     protected static final Logger logger = LogUtil.logger;
-    private static final String CASE_STATUS_PREFIX = "__case_status__:";
+    private static final String CASE_STATUS_PREFIX = Constants.CASE_STATUS_PREFIX;
 
     protected SystemProfile profile;
     protected AuthStrategy auth;
@@ -237,7 +238,7 @@ public class BaseApi {
     // 六、统一断言
     // ==================================================================
     public boolean checkStatus(int expectedCode) {
-        Object actual = res != null ? res.get("code") : null;
+        Object actual = res != null ? res.get(Constants.RES_CODE) : null;
         int actualInt;
         try {
             actualInt = actual == null ? -1 : Integer.parseInt(String.valueOf(actual).trim());
@@ -359,7 +360,7 @@ public class BaseApi {
     // 七、用例生命周期
     // ==================================================================
     public void checkDepends(Map<String, Object> caseData) {
-        Object raw = caseData != null ? caseData.get("depends") : null;
+        Object raw = caseData != null ? caseData.get(Constants.FIELD_DEPENDS) : null;
         if (raw == null || String.valueOf(raw).isEmpty()) return;
         String text = String.valueOf(raw).replace("，", ",");
         for (String caseId : text.split(",")) {
@@ -369,16 +370,16 @@ public class BaseApi {
             if (status == null) {
                 throw new CaseSkipped("依赖的用例 id=" + caseId + " 尚未执行，无法确认前置条件");
             }
-            if (!"pass".equals(status)) {
+            if (!Constants.STATUS_PASS.equals(status)) {
                 throw new CaseSkipped("依赖的用例 id=" + caseId + " 执行未通过，本用例跳过");
             }
         }
     }
 
     public static void recordCaseStatus(Map<String, Object> caseData, boolean isPass) {
-        Object caseId = caseData != null ? caseData.get("id") : null;
+        Object caseId = caseData != null ? caseData.get(Constants.FIELD_ID) : null;
         if (caseId == null || String.valueOf(caseId).isEmpty()) return;
-        GlobalVar.set(CASE_STATUS_PREFIX + String.valueOf(caseId), isPass ? "pass" : "fail");
+        GlobalVar.set(CASE_STATUS_PREFIX + String.valueOf(caseId), isPass ? Constants.STATUS_PASS : Constants.STATUS_FAIL);
     }
 
     @SuppressWarnings("unchecked")
@@ -417,16 +418,16 @@ public class BaseApi {
                     continue;
                 }
                 stepMap = new LinkedHashMap<>();
-                stepMap.put("method", parts[0]);
-                stepMap.put("url", parts[1]);
+                stepMap.put(Constants.FIELD_METHOD, parts[0]);
+                stepMap.put(Constants.FIELD_URL, parts[1]);
             } else if (step instanceof Map) {
                 stepMap = (Map<String, Object>) step;
             } else {
                 continue;
             }
-            logger.info("【{}】第 {} 步：{} {}", label, i + 1, stepMap.get("method"), stepMap.get("url"));
+            logger.info("【{}】第 {} 步：{} {}", label, i + 1, stepMap.get(Constants.FIELD_METHOD), stepMap.get(Constants.FIELD_URL));
             doRequest(stepMap);
-            extract((String) stepMap.getOrDefault("relation", stepMap.get("extract")));
+            extract((String) stepMap.getOrDefault(Constants.FIELD_RELATION, stepMap.get(Constants.FIELD_EXTRACT)));
             responses.add(res);
         }
         return responses;
@@ -435,27 +436,27 @@ public class BaseApi {
     @SuppressWarnings("unchecked")
     private Map<String, Object> doRequest(Map<String, Object> caseData) throws Exception {
         Map<String, String> headers = new LinkedHashMap<>();
-        Object h = Base.safeLoads(caseData.get("headers"), new LinkedHashMap<>());
+        Object h = Base.safeLoads(caseData.get(Constants.FIELD_HEADERS), new LinkedHashMap<>());
         if (h instanceof Map) headers.putAll((Map<String, String>) h);
 
-        Object ct = caseData.get("content_type");
-        if (ct == null) ct = caseData.get("request_type");
+        Object ct = caseData.get(Constants.FIELD_CONTENT_TYPE);
+        if (ct == null) ct = caseData.get(Constants.FIELD_REQUEST_TYPE);
         if (ct == null) ct = profile.getContentType();
         if (ct != null && !hasHeader(headers, "Content-Type")) {
             headers.put("Content-Type", String.valueOf(ct));
         }
 
-        Object methodObj = caseData.get("method");
+        Object methodObj = caseData.get(Constants.FIELD_METHOD);
         if (methodObj == null || String.valueOf(methodObj).trim().isEmpty()) {
-            throw new IllegalArgumentException("用例缺少必填字段 method：" + caseData.get("id"));
+            throw new IllegalArgumentException("用例缺少必填字段 method：" + caseData.get(Constants.FIELD_ID));
         }
         res = request(
                 String.valueOf(methodObj),
-                caseData.get("url"),
-                Base.safeLoads(caseData.get("request_body"), null),
+                caseData.get(Constants.FIELD_URL),
+                Base.safeLoads(caseData.get(Constants.FIELD_REQUEST_BODY), null),
                 headers,
-                (Map<String, String>) Base.safeLoads(caseData.get("cookies"), new LinkedHashMap<>()),
-                caseData.get("host") != null ? String.valueOf(caseData.get("host")) : null,
+                (Map<String, String>) Base.safeLoads(caseData.get(Constants.FIELD_COOKIES), new LinkedHashMap<>()),
+                caseData.get(Constants.FIELD_HOST) != null ? String.valueOf(caseData.get(Constants.FIELD_HOST)) : null,
                 null
         );
         return res;
@@ -476,24 +477,24 @@ public class BaseApi {
         res = null;
 
         checkDepends(caseData);
-        runSteps(caseData.get("setup"), "前置");
+        runSteps(caseData.get(Constants.FIELD_SETUP), "前置");
 
         boolean isPass = false;
         try {
             doRequest(caseData);
-            Object rel = caseData.get("relation");
-            if (rel == null) rel = caseData.get("extract");
+            Object rel = caseData.get(Constants.FIELD_RELATION);
+            if (rel == null) rel = caseData.get(Constants.FIELD_EXTRACT);
             extract(rel != null ? String.valueOf(rel) : null);
-            checkExpects(caseData.get("expects"));
-            if (Base.toBool(caseData.get("check_business"), true)) {
-                checkSuccess(caseData.get("expected_code"), "");
+            checkExpects(caseData.get(Constants.FIELD_EXPECTS));
+            if (Base.toBool(caseData.get(Constants.FIELD_CHECK_BUSINESS), true)) {
+                checkSuccess(caseData.get(Constants.FIELD_EXPECTED_CODE), "");
             }
             isPass = true;
             return res;
         } finally {
             recordCaseStatus(caseData, isPass);
             try {
-                runSteps(caseData.get("teardown"), "后置清理");
+                runSteps(caseData.get(Constants.FIELD_TEARDOWN), "后置清理");
             } catch (Exception exc) {
                 logger.error("后置清理步骤执行失败（不影响用例结论）：{}", exc.getMessage());
             } finally {
@@ -505,10 +506,10 @@ public class BaseApi {
     // ==================================================================
     // 便捷属性
     // ==================================================================
-    public Object getBody() { return res != null ? res.get("body") : null; }
-    public Object getCode() { return res != null ? res.get("code") : null; }
+    public Object getBody() { return res != null ? res.get(Constants.RES_BODY) : null; }
+    public Object getCode() { return res != null ? res.get(Constants.RES_CODE) : null; }
     public Object getBusinessCode() { return profile.response.actualCode(res); }
     public String getMessage() { return profile.response.message(res); }
-    public Object getElapsed() { return res != null ? res.get("elapsed") : null; }
+    public Object getElapsed() { return res != null ? res.get(Constants.RES_ELAPSED) : null; }
     public Map<String, Object> getResponse() { return res; }
 }

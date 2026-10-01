@@ -1,5 +1,6 @@
 package com.amsapi.utils;
 
+import com.amsapi.common.Constants;
 import com.amsapi.common.base.Base;
 import com.amsapi.config.Settings;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,12 +44,6 @@ public class RequestSend {
     private static final Logger logger = LoggerFactory.getLogger(RequestSend.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    public static final String CT_JSON = "application/json";
-    public static final String CT_FORM = "application/x-www-form-urlencoded";
-    public static final String CT_MULTIPART = "multipart/form-data";
-    public static final String CT_XML = "application/xml";
-    public static final String CT_TEXT = "text/plain";
-
     private final int timeout;
     private final boolean verify;
     private final CloseableHttpClient session;
@@ -67,7 +62,7 @@ public class RequestSend {
             this.session = session;
         } else {
             // 应用超时配置到 HttpClient
-            int timeoutMs = this.timeout * 1000;
+            int timeoutMs = this.timeout * Constants.MS_PER_SECOND;
             RequestConfig rc = RequestConfig.custom()
                     .setConnectTimeout(timeoutMs)
                     .setConnectionRequestTimeout(timeoutMs)
@@ -76,7 +71,7 @@ public class RequestSend {
             this.session = HttpClients.custom().setDefaultRequestConfig(rc).build();
         }
         this.encoding = encoding;
-        this.responseFormat = (responseFormat != null ? responseFormat : "auto").toLowerCase();
+        this.responseFormat = (responseFormat != null ? responseFormat : Constants.DEFAULT_RESPONSE_FORMAT).toLowerCase();
     }
 
     // ------------------------------------------------------------------
@@ -109,8 +104,8 @@ public class RequestSend {
         }
         String ct = contentType(headers);
         if (method.equals("delete") && ct.isEmpty()) return "params";
-        if (ct.startsWith(CT_MULTIPART)) return "files";
-        if (ct.startsWith(CT_FORM)) return "data";
+        if (ct.startsWith(Constants.CT_MULTIPART)) return Constants.LOC_FILES;
+        if (ct.startsWith(Constants.CT_FORM)) return Constants.LOC_DATA;
         if (isRawText(headers)) return "data";
         return "json";
     }

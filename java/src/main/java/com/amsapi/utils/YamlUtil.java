@@ -1,5 +1,6 @@
 package com.amsapi.utils;
 
+import com.amsapi.common.Constants;
 import com.amsapi.common.base.Base;
 import com.amsapi.config.Settings;
 import org.slf4j.Logger;
@@ -43,7 +44,7 @@ public class YamlUtil {
         for (File file : files) {
             try (FileInputStream fis = new FileInputStream(file)) {
                 java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
-                byte[] buffer = new byte[8192];
+                byte[] buffer = new byte[Constants.DEFAULT_BUFFER_SIZE];
                 int len;
                 while ((len = fis.read(buffer)) != -1) {
                     baos.write(buffer, 0, len);

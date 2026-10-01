@@ -1,5 +1,6 @@
 package com.amsapi.common.base;
 
+import com.amsapi.common.Constants;
 import com.amsapi.common.variable.GlobalVar;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,12 +28,12 @@ import java.util.regex.Pattern;
  */
 public final class Base {
 
-    private static final Pattern PATTERN = Pattern.compile("\\$\\{(.*?)\\}");
+    private static final Pattern PATTERN = Pattern.compile(Constants.PATTERN_VAR);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     // XML 约定
-    public static final String ATTR_PREFIX = "@";
-    public static final String TEXT_KEY = "#text";
+    public static final String ATTR_PREFIX = Constants.XML_ATTR_PREFIX;
+    public static final String TEXT_KEY = Constants.XML_TEXT_KEY;
 
     private Base() {
     }
@@ -379,10 +380,10 @@ public final class Base {
      */
     public static String dictToXml(Object data, String root, boolean declaration, String encoding) {
         if (data == null) return "";
-        String rootName = root == null ? "root" : root;
+        String rootName = root == null ? Constants.XML_DEFAULT_ROOT : root;
         Object payload = data;
 
-        if (data instanceof Map && ((Map<String, Object>) data).size() == 1 && "root".equals(root)) {
+        if (data instanceof Map && ((Map<String, Object>) data).size() == 1 && Constants.XML_DEFAULT_ROOT.equals(root)) {
             Map.Entry<String, Object> entry = ((Map<String, Object>) data).entrySet().iterator().next();
             rootName = entry.getKey();
             payload = entry.getValue();
@@ -390,7 +391,7 @@ public final class Base {
 
         StringBuilder sb = new StringBuilder();
         if (declaration) {
-            sb.append("<?xml version=\"1.0\" encoding=\"").append(encoding == null ? "utf-8" : encoding).append("\"?>");
+            sb.append("<?xml version=\"1.0\" encoding=\"").append(encoding == null ? Constants.XML_DEFAULT_ENC : encoding).append("\"?>");
         }
         fillXml(sb, rootName, payload);
         return sb.toString();

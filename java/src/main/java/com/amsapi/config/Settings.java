@@ -1,5 +1,7 @@
 package com.amsapi.config;
 
+import com.amsapi.common.Constants;
+
 import java.io.File;
 import java.util.*;
 
@@ -82,19 +84,19 @@ public final class Settings {
     // 二、运行开关
     // --------------------------------------------------------------------------
     public static final class RunConfig {
-        public static String DATA_SOURCE = "excel";
+        public static String DATA_SOURCE = Constants.DS_EXCEL;
         public static String SHEET_NAME = "test_case_list";
         public static boolean WRITE_BACK = true;
-        public static int TIMEOUT = 10;
+        public static int TIMEOUT = Constants.DEFAULT_TIMEOUT_SEC;
         public static boolean VERIFY = false;
         public static String BASE_URL = "";
-        public static String ENV = "test";
-        public static String SYSTEM = "default";
+        public static String ENV = Constants.DEFAULT_ENV;
+        public static String SYSTEM = Constants.DEFAULT_SYSTEM;
         public static String DB_WEB = "";
         public static String DB_ENVIRONMENT = "";
-        public static String REPORT_TYPE = "allure";
+        public static String REPORT_TYPE = Constants.DEFAULT_REPORT_TYPE;
         public static boolean SMOKE_ONLY = false;
-        public static String TAGS = "smoke";
+        public static String TAGS = Constants.DEFAULT_TAGS;
 
         private RunConfig() {
         }
@@ -104,14 +106,14 @@ public final class Settings {
     // 数据源 -> 用例驱动 marker 的映射
     // --------------------------------------------------------------------------
     public static final Map<String, String> DATA_SOURCE_MARKERS;
-    public static final String DATA_SOURCE_ALL = "all";
-    public static final List<String> VALID_DATA_SOURCES = Arrays.asList("excel", "yaml", "mysql", DATA_SOURCE_ALL);
+    public static final String DATA_SOURCE_ALL = Constants.DS_ALL;
+    public static final List<String> VALID_DATA_SOURCES = Arrays.asList(Constants.DS_EXCEL, Constants.DS_YAML, Constants.DS_MYSQL, DATA_SOURCE_ALL);
 
     static {
         Map<String, String> m = new LinkedHashMap<>();
-        m.put("excel", "excel");
-        m.put("yaml", "yaml");
-        m.put("mysql", "mysql");
+        m.put(Constants.DS_EXCEL, Constants.DS_EXCEL);
+        m.put(Constants.DS_YAML, Constants.DS_YAML);
+        m.put(Constants.DS_MYSQL, Constants.DS_MYSQL);
         DATA_SOURCE_MARKERS = Collections.unmodifiableMap(m);
     }
 
@@ -138,7 +140,7 @@ public final class Settings {
         DB_CONFIG.put("user", "");
         DB_CONFIG.put("password", "");
         DB_CONFIG.put("database", "");
-        DB_CONFIG.put("port", 3306);
+        DB_CONFIG.put("port", Constants.DEFAULT_DB_PORT);
         DB_CONFIG.put("charset", "utf8");
     }
 
@@ -157,12 +159,12 @@ public final class Settings {
     // 四、日志 / 报告 / 认证 / CI 可配置项
     // --------------------------------------------------------------------------
     public static final class LogConfig {
-        public static String LEVEL = "DEBUG";
-        public static String CONSOLE_LEVEL = "DEBUG";
+        public static String LEVEL = Constants.DEFAULT_LOG_LEVEL;
+        public static String CONSOLE_LEVEL = Constants.DEFAULT_LOG_LEVEL;
         public static String FILE_NAME_FORMAT = "%Y_%m_%d";
         public static String FORMAT = "%(asctime)s | %(levelname)-7s | %(filename)s:%(lineno)d | %(message)s";
         public static String DATE_FORMAT = "%Y-%m-%d %H:%M:%S";
-        public static String ROOT_NAME = "amsapi";
+        public static String ROOT_NAME = Constants.DEFAULT_LOG_ROOT;
 
         private LogConfig() {
         }
@@ -177,7 +179,7 @@ public final class Settings {
         public static String TITLE = "接口自动化测试";
         public static String PROJECT = "amsapi-auto";
         public static String HTML_NAME = "report.html";
-        public static int MAX_ATTACH_LEN = 20000;
+        public static int MAX_ATTACH_LEN = Constants.DEFAULT_MAX_ATTACH_LEN;
 
         private ReportConfig() {
         }
@@ -188,8 +190,8 @@ public final class Settings {
     }
 
     public static final class AuthConfig {
-        public static int REFRESH_AHEAD = 60;
-        public static int TOKEN_TIMEOUT = 10;
+        public static int REFRESH_AHEAD = Constants.DEFAULT_REFRESH_AHEAD;
+        public static int TOKEN_TIMEOUT = Constants.DEFAULT_TOKEN_TIMEOUT;
         public static boolean TOKEN_VERIFY = false;
 
         private AuthConfig() {
@@ -258,7 +260,7 @@ public final class Settings {
             if (env.containsKey("base_url")) RunConfig.BASE_URL = trimSafe(env.get("base_url"));
             if (env.containsKey("system")) {
                 String s = trimSafe(env.get("system"));
-                RunConfig.SYSTEM = s.isEmpty() ? "default" : s;
+                RunConfig.SYSTEM = s.isEmpty() ? Constants.DEFAULT_SYSTEM : s;
             }
         }
 
@@ -398,7 +400,7 @@ public final class Settings {
             }
         }
 
-        RunConfig.REPORT_TYPE = (RunConfig.REPORT_TYPE == null ? "allure" : RunConfig.REPORT_TYPE).trim().toLowerCase();
+        RunConfig.REPORT_TYPE = (RunConfig.REPORT_TYPE == null ? Constants.DEFAULT_REPORT_TYPE : RunConfig.REPORT_TYPE).trim().toLowerCase();
     }
 
     private static void setField(Class<?> clazz, String name, String value) {

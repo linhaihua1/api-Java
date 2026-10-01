@@ -1,5 +1,6 @@
 package com.amsapi.common.response;
 
+import com.amsapi.common.Constants;
 import com.amsapi.common.base.Base;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,12 +23,12 @@ public class ResponseSpec {
     private static final Logger logger = LoggerFactory.getLogger(ResponseSpec.class);
 
     // 风格常量
-    public static final String STYLE_STATUS = "status";
-    public static final String STYLE_CODE = "code";
-    public static final String STYLE_SUCCESS = "success";
-    public static final String STYLE_ERRNO = "errno";
-    public static final String STYLE_RETCODE = "retcode";
-    public static final String STYLE_RAW = "raw";
+    public static final String STYLE_STATUS = Constants.STYLE_STATUS;
+    public static final String STYLE_CODE = Constants.STYLE_CODE;
+    public static final String STYLE_SUCCESS = Constants.STYLE_SUCCESS;
+    public static final String STYLE_ERRNO = Constants.STYLE_ERRNO;
+    public static final String STYLE_RETCODE = Constants.STYLE_RETCODE;
+    public static final String STYLE_RAW = Constants.STYLE_RAW;
 
     public static final List<String> STYLES = Arrays.asList(
             STYLE_STATUS, STYLE_CODE, STYLE_SUCCESS, STYLE_ERRNO, STYLE_RETCODE, STYLE_RAW);
@@ -160,7 +161,7 @@ public class ResponseSpec {
     // ------------------------------------------------------------------
     public boolean isHttpOk(Map<String, Object> response) {
         if (response == null) return false;
-        Object code = response.get("code");
+        Object code = response.get(Constants.RES_CODE);
         if (code == null) return false;
         try {
             return httpOk.contains(Integer.parseInt(String.valueOf(code).trim()));
@@ -171,7 +172,7 @@ public class ResponseSpec {
 
     public Object actualCode(Map<String, Object> response) {
         if (codePaths.length == 0) {
-            return response == null ? null : response.get("code");
+            return response == null ? null : response.get(Constants.RES_CODE);
         }
         return pick(response, codePaths);
     }

@@ -1,5 +1,6 @@
 package com.amsapi.common.hooks;
 
+import com.amsapi.common.Constants;
 import com.amsapi.common.base.Base;
 import com.amsapi.common.variable.GlobalVar;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -255,15 +256,15 @@ public final class Hooks {
     public static Function<Map<String, Object>, Map<String, Object>> makeTimestampNonceHook(Map<String, Object> kwargs) {
         String tsField = kwargs.containsKey("fields") ? ((List<String>) kwargs.get("fields")).get(0) : "timestamp";
         String nonceField = kwargs.containsKey("fields") ? ((List<String>) kwargs.get("fields")).get(1) : "nonce";
-        String tsUnit = kwargs.getOrDefault("ts_unit", "s").toString();
-        int nonceLen = kwargs.containsKey("nonce_len") ? ((Number) kwargs.get("nonce_len")).intValue() : 16;
+        String tsUnit = kwargs.getOrDefault("ts_unit", Constants.DEFAULT_TS_UNIT).toString();
+        int nonceLen = kwargs.containsKey("nonce_len") ? ((Number) kwargs.get("nonce_len")).intValue() : Constants.DEFAULT_NONCE_LEN;
 
         return ctx -> {
             Object payload = ctx.get("payload");
             if (payload instanceof Map) {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> p = (Map<String, Object>) payload;
-                long value = System.currentTimeMillis() / ("ms".equals(tsUnit) ? 1 : 1000);
+                long value = System.currentTimeMillis() / ("ms".equals(tsUnit) ? 1 : Constants.MS_PER_SECOND);
                 if (kwargs.containsKey("ts_digits")) {
                     int digits = ((Number) kwargs.get("ts_digits")).intValue();
                     String s = String.valueOf(value);
@@ -271,7 +272,7 @@ public final class Hooks {
                 }
                 p.put(tsField, value);
                 StringBuilder sb = new StringBuilder();
-                String chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+                String chars = Constants.DEFAULT_NONCE_CHARSET;
                 Random rnd = new Random();
                 for (int i = 0; i < nonceLen; i++) sb.append(chars.charAt(rnd.nextInt(chars.length())));
                 p.put(nonceField, sb.toString());
@@ -327,7 +328,7 @@ public final class Hooks {
 
     public static String aesEncrypt(String plain, String key, String iv, String mode, boolean b64) throws Exception {
         byte[] keyBytes = key.getBytes(StandardCharsets.UTF_8);
-        byte[] raw = pkcs7Pad(plain.getBytes(StandardCharsets.UTF_8), 16);
+        byte[] raw = pkcs7Pad(plain.getBytes(StandardCharsets.UTF_8), Constants.AES_BLOCK_SIZE);
         Cipher cipher = Cipher.getInstance("AES/" + (mode == null ? "ECB" : mode.toUpperCase()) + "/PKCS5Padding");
         SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
         if ("CBC".equalsIgnoreCase(mode)) {
