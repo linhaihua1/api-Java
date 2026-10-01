@@ -1,5 +1,6 @@
 package com.amsapi.tests;
 
+import com.amsapi.common.Constants;
 import com.amsapi.utils.RequestSend;
 import org.junit.jupiter.api.Test;
 
@@ -70,8 +71,8 @@ public class TestRequestSend {
 
     @Test
     void testConstants() {
-        assertEquals("application/json", RequestSend.CT_JSON);
-        assertEquals("application/xml", RequestSend.CT_XML);
-        assertEquals("text/plain", RequestSend.CT_TEXT);
+        assertEquals("application/json", Constants.CT_JSON);
+        assertEquals("application/xml", Constants.CT_XML);
+        assertEquals("text/plain", Constants.CT_TEXT);
     }
 }

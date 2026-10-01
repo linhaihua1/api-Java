@@ -12,7 +12,14 @@
 
 ### Q3: 如何指定 Java 版本？
 
-**A**: 框架要求 JDK 8+。确认 `JAVA_HOME` 指向正确的 JDK。
+**A**: 框架兼容 Java 8 / 11 / 17，默认编译为 Java 8 字节码（major version 52），在三个版本上均可直接运行。确认 `JAVA_HOME` 指向正确的 JDK 即可。
+
+如需以更高版本语法编译：
+```bash
+mvn compile            # 默认 Java 8 字节码
+mvn compile -P java11  # Java 11 编译
+mvn compile -P java17  # Java 17 编译
+```
 
 ## 二、配置相关
 
@@ -176,3 +183,19 @@ allure generate target/allure-results -o report # 生成静态 HTML
 ### Q23: 如何添加自定义钩子？
 
 **A**: 见 [06-系统适配指南](06-系统适配指南.md) 第 6.3 节。实现一个返回 `Function<Map,Map>` 的静态方法，在档案中引用即可。
+
+### Q24: 框架中的常量在哪里定义？
+
+**A**: 所有协议级常量（编码、HTTP 方法、字段名、判定风格、默认值、数据源名等）集中于 `com.amsapi.common.Constants`。框架代码中无散落的硬编码字面量，新增常量只需在此类添加 `public static final` 字段。
+
+### Q25: 如何运行框架自带的单元测试？
+
+**A**: 框架内置 10 个测试类共 119 个单元测试，全部通过。运行：
+```bash
+mvn test -Dtest=CoreTest,TestIniParser,TestGlobalVar,TestResponseSpec,TestAuth,TestAsserts,TestHooks,TestSettings,TestSystemProfile,TestRequestSend
+```
+或直接 `mvn test` 运行全部（含数据驱动测试）。
+
+### Q26: 超时配置不生效怎么办？
+
+**A**: 请确认使用的是最新代码。近期已修复 `RequestSend` 超时未实际应用到 `HttpClient` 的问题，超时配置（`[run] timeout` 或 `AMSAPI_TIMEOUT`）现在会正确设置到连接和读取超时。如仍有问题，检查 `[auth] token_timeout` 键是否存在（已修复该键缺失导致的 NPE）。

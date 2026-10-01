@@ -187,3 +187,4 @@ public class UserFlowTest {
 3. **继承 BaseApi**：所有自定义接口对象必须继承 BaseApi
 4. **不要硬编码地址**：URL 用相对路径，域名走配置
 5. **用 `${var}` 传参**：接口间通过变量池传递，不要在代码中手动传
+6. **使用 Constants 常量**：字段名、HTTP 方法、Content-Type 等均引用 `com.amsapi.common.Constants`，不要在代码中写字面量字符串（如 `"get"`、`"url"`、`"application/json"`）

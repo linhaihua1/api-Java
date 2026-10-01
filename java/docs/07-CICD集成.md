@@ -2,6 +2,8 @@
 
 ## 一、Jenkins 流水线
 
+> 框架兼容 Java 8 / 11 / 17，默认编译为 Java 8 字节码。CI 中可根据环境选择 JDK 版本，无需特殊配置即可运行。如需以更高版本编译，可加 `-P java11` 或 `-P java17`。
+
 ### 1.1 声明式 Pipeline
 
 ```groovy
@@ -127,7 +129,7 @@ stages:
 
 api-test:
   stage: test
-  image: maven:3.8-openjdk-8
+  image: maven:3.8-openjdk-8    # 可选 maven:3.8-openjdk-11 / maven:3.8-openjdk-17
   variables:
     AMSAPI_BASE_URL: "http://test-server:8080"
     AMSAPI_DATA_SOURCE: "yaml"
@@ -150,11 +152,14 @@ on: [push]
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ '8', '11', '17' ]    # 多版本兼容验证
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-java@v3
         with:
-          java-version: '8'
+          java-version: ${{ matrix.java }}
           distribution: 'temurin'
           cache: maven
       - run: cd java && mvn test

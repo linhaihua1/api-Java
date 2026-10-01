@@ -1,6 +1,6 @@
 # amsapi-auto 接口自动化测试框架
 
-> 一套数据驱动、多系统适配的接口自动化测试框架，由 Python 版重构为 Java 版（Java 8 + JUnit 5 + Maven）。
+> 一套数据驱动、多系统适配的接口自动化测试框架，由 Python 版重构为 Java 版（Java 8/11/17 兼容 + JUnit 5 + Maven）。
 
 ## 一、框架简介
 
@@ -25,9 +25,9 @@ amsapi-auto 是一套生产级的接口自动化测试框架，核心设计理�
 
 | 类别 | 技术 | 版本 |
 |---|---|---|
-| 语言 | Java | 8+ |
+| 语言 | Java | 8 / 11 / 17（默认编译为 Java 8 字节码，三版本兼容运行） |
 | 构建 | Maven | 3.6+ |
-| 测试 | JUnit 5 | 5.10.2 |
+| 测试 | JUnit 5 | 5.10.2（10 个测试类，119 个单元测试全部通过） |
 | HTTP | Apache HttpClient | 4.5.14 |
 | Excel | Apache POI | 5.2.5 |
 | YAML | SnakeYAML | 2.2 |
@@ -35,29 +35,34 @@ amsapi-auto 是一套生产级的接口自动化测试框架，核心设计理�
 | 日志 | SLF4J + Logback | 2.0.13 / 1.5.6 |
 | JSON | Jackson | 2.17.1 |
 | 报告 | Allure | 2.27.0 |
+| 常量 | `Constants.java` | 框架唯一常量中心，零硬编码 |
+
+> **Java 双版本兼容**：默认 `mvn compile` 生成 Java 8 字节码（major version 52），可在 Java 8/11/17 上运行；如需用更高版本语法编译，可使用 `mvn compile -P java11` 或 `mvn compile -P java17`。
 
 ## 三、快速开始
 
 ### 3.1 环境要求
 
-- JDK 8+
+- JDK 8 / 11 / 17（任选其一，框架默认编译为 Java 8 字节码）
 - Maven 3.6+
 
 ### 3.2 编译
 
 ```bash
 cd java
-mvn clean compile
+mvn clean compile          # 默认 Java 8 字节码（兼容 8/11/17 运行）
+mvn clean compile -P java11  # 以 Java 11 编译
+mvn clean compile -P java17  # 以 Java 17 编译
 ```
 
 ### 3.3 运行测试
 
 ```bash
-# 运行全部测试
+# 运行全部测试（含 119 个框架单元测试 + 数据驱动测试）
 mvn test
 
-# 只运行框架单元测试
-mvn test -Dtest=CoreTest
+# 只运行框架单元测试（10 个测试类）
+mvn test -Dtest=CoreTest,TestIniParser,TestGlobalVar,TestResponseSpec,TestAuth,TestAsserts,TestHooks,TestSettings,TestSystemProfile,TestRequestSend
 
 # 运行指定测试类
 mvn test -Dtest=TestYamlDriver
@@ -92,11 +97,12 @@ java/
 │   │   ├── Main.java          # 程序入口
 │   │   ├── config/            # 配置层
 │   │   ├── common/            # 公共层（核心能力）
+│   │   │   └── Constants.java # ★ 全局常量中心（零硬编码）
 │   │   ├── utils/             # 工具层
 │   │   └── api/               # 接口层（API Object）
 │   └── test/java/com/amsapi/
 │       ├── testcase/          # 数据驱动测试
-│       └── tests/             # 框架单元测试
+│       └── tests/             # 框架单元测试（10 个测试类，119 个用例）
 └── docs/                      # 本文档目录
 ```
 
@@ -145,3 +151,6 @@ AMSAPI_BASE_URL=http://127.0.0.1:8080 AMSAPI_DATA_SOURCE=yaml mvn test -Dtest=Te
 - **版本**：1.0.0（Java 版）
 - **生成日期**：2026-10-01
 - **前身**：Python 版 amsapi-auto（已重构为 Java）
+- **兼容性**：Java 8 / 11 / 17（默认编译为 Java 8 字节码）
+- **单元测试**：10 个测试类，119 个用例全部通过
+- **零硬编码**：所有魔法值集中于 `com.amsapi.common.Constants`
