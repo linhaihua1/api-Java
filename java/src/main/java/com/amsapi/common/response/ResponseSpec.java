@@ -161,7 +161,12 @@ public class ResponseSpec {
     public boolean isHttpOk(Map<String, Object> response) {
         if (response == null) return false;
         Object code = response.get("code");
-        return code != null && httpOk.contains(Integer.parseInt(String.valueOf(code)));
+        if (code == null) return false;
+        try {
+            return httpOk.contains(Integer.parseInt(String.valueOf(code).trim()));
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     public Object actualCode(Map<String, Object> response) {

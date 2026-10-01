@@ -5,6 +5,7 @@ import com.amsapi.config.Settings;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.*;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -62,7 +63,18 @@ public class RequestSend {
                        String encoding, String responseFormat) {
         this.timeout = timeout != null ? timeout : Settings.RunConfig.TIMEOUT;
         this.verify = verify != null ? verify : Settings.RunConfig.VERIFY;
-        this.session = session != null ? session : HttpClients.createDefault();
+        if (session != null) {
+            this.session = session;
+        } else {
+            // 应用超时配置到 HttpClient
+            int timeoutMs = this.timeout * 1000;
+            RequestConfig rc = RequestConfig.custom()
+                    .setConnectTimeout(timeoutMs)
+                    .setConnectionRequestTimeout(timeoutMs)
+                    .setSocketTimeout(timeoutMs)
+                    .build();
+            this.session = HttpClients.custom().setDefaultRequestConfig(rc).build();
+        }
         this.encoding = encoding;
         this.responseFormat = (responseFormat != null ? responseFormat : "auto").toLowerCase();
     }

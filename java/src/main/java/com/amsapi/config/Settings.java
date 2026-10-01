@@ -219,6 +219,21 @@ public final class Settings {
                 .matches("1|true|yes|on|y");
     }
 
+    private static int parseIntSafe(String value, int defaultVal) {
+        if (value == null) return defaultVal;
+        String s = value.trim();
+        if (s.isEmpty()) return defaultVal;
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException e) {
+            return defaultVal;
+        }
+    }
+
+    private static String trimSafe(String value) {
+        return value == null ? "" : value.trim();
+    }
+
     private static void loadConfIni() {
         File file = new File(CONF_FILE);
         if (!file.exists()) {
@@ -231,7 +246,7 @@ public final class Settings {
             if (run.containsKey("data_source")) RunConfig.DATA_SOURCE = run.get("data_source");
             if (run.containsKey("sheet_name")) RunConfig.SHEET_NAME = run.get("sheet_name");
             if (run.containsKey("write_back")) RunConfig.WRITE_BACK = toBool(run.get("write_back"));
-            if (run.containsKey("timeout")) RunConfig.TIMEOUT = Integer.parseInt(run.get("timeout").trim());
+            if (run.containsKey("timeout")) RunConfig.TIMEOUT = parseIntSafe(run.get("timeout"), RunConfig.TIMEOUT);
             if (run.containsKey("verify")) RunConfig.VERIFY = toBool(run.get("verify"));
             if (run.containsKey("smoke")) RunConfig.SMOKE_ONLY = toBool(run.get("smoke"));
             if (run.containsKey("tags")) RunConfig.TAGS = run.get("tags");
@@ -239,66 +254,68 @@ public final class Settings {
 
         Map<String, String> env = cf.get("env");
         if (env != null) {
-            if (env.containsKey("env")) RunConfig.ENV = env.get("env");
-            if (env.containsKey("base_url")) RunConfig.BASE_URL = env.get("base_url").trim();
+            if (env.containsKey("env")) RunConfig.ENV = trimSafe(env.get("env"));
+            if (env.containsKey("base_url")) RunConfig.BASE_URL = trimSafe(env.get("base_url"));
             if (env.containsKey("system")) {
-                String s = env.get("system").trim();
+                String s = trimSafe(env.get("system"));
                 RunConfig.SYSTEM = s.isEmpty() ? "default" : s;
             }
         }
 
         Map<String, String> report = cf.get("report");
         if (report != null) {
-            if (report.containsKey("report_type")) RunConfig.REPORT_TYPE = report.get("report_type").trim().toLowerCase();
+            if (report.containsKey("report_type")) RunConfig.REPORT_TYPE = trimSafe(report.get("report_type")).toLowerCase();
             if (report.containsKey("title")) {
-                String v = report.get("title").trim();
+                String v = trimSafe(report.get("title"));
                 if (!v.isEmpty()) ReportConfig.TITLE = v;
             }
             if (report.containsKey("project")) {
-                String v = report.get("project").trim();
+                String v = trimSafe(report.get("project"));
                 if (!v.isEmpty()) ReportConfig.PROJECT = v;
             }
             if (report.containsKey("html_name")) {
-                String v = report.get("html_name").trim();
+                String v = trimSafe(report.get("html_name"));
                 if (!v.isEmpty()) ReportConfig.HTML_NAME = v;
             }
-            if (report.containsKey("max_attach_len")) ReportConfig.MAX_ATTACH_LEN = Integer.parseInt(report.get("max_attach_len").trim());
+            if (report.containsKey("max_attach_len")) ReportConfig.MAX_ATTACH_LEN = parseIntSafe(report.get("max_attach_len"), ReportConfig.MAX_ATTACH_LEN);
         }
 
         Map<String, String> log = cf.get("log");
         if (log != null) {
             if (log.containsKey("level")) {
-                String v = log.get("level").trim().toUpperCase();
+                String v = trimSafe(log.get("level")).toUpperCase();
                 if (!v.isEmpty()) LogConfig.LEVEL = v;
             }
             if (log.containsKey("console_level")) {
-                String v = log.get("console_level").trim().toUpperCase();
+                String v = trimSafe(log.get("console_level")).toUpperCase();
                 if (!v.isEmpty()) LogConfig.CONSOLE_LEVEL = v;
             }
             if (log.containsKey("file_name_format")) LogConfig.FILE_NAME_FORMAT = log.get("file_name_format");
             if (log.containsKey("format")) LogConfig.FORMAT = log.get("format");
             if (log.containsKey("date_format")) LogConfig.DATE_FORMAT = log.get("date_format");
             if (log.containsKey("root_name")) {
-                String v = log.get("root_name").trim();
+                String v = trimSafe(log.get("root_name"));
                 if (!v.isEmpty()) LogConfig.ROOT_NAME = v;
             }
         }
 
         Map<String, String> auth = cf.get("auth");
         if (auth != null) {
-            if (auth.containsKey("refresh_ahead")) AuthConfig.REFRESH_AHEAD = Integer.parseInt(auth.get("refresh_ahead").trim());
-            if (auth.containsKey("token_timeout")) AuthConfig.TOKEN_TIMEOUT = Integer.parseInt(auth.get("token_timeout").trim());
+            if (auth.containsKey("refresh_ahead")) AuthConfig.REFRESH_AHEAD = parseIntSafe(auth.get("refresh_ahead"), AuthConfig.REFRESH_AHEAD);
+            if (auth.containsKey("token_timeout")) AuthConfig.TOKEN_TIMEOUT = parseIntSafe(auth.get("token_timeout"), AuthConfig.TOKEN_TIMEOUT);
             if (auth.containsKey("token_verify")) AuthConfig.TOKEN_VERIFY = toBool(auth.get("token_verify"));
         }
 
         Map<String, String> ci = cf.get("ci");
         if (ci != null && ci.containsKey("detect_env_vars")) {
             String raw = ci.get("detect_env_vars");
-            List<String> vars = new ArrayList<>();
-            for (String item : raw.split(",")) {
-                if (!item.trim().isEmpty()) vars.add(item.trim());
+            if (raw != null) {
+                List<String> vars = new ArrayList<>();
+                for (String item : raw.split(",")) {
+                    if (!item.trim().isEmpty()) vars.add(item.trim());
+                }
+                CIConfig.DETECT_ENV_VARS = vars.toArray(new String[0]);
             }
-            CIConfig.DETECT_ENV_VARS = vars.toArray(new String[0]);
         }
 
         Map<String, String> db = cf.get("db");
@@ -306,7 +323,7 @@ public final class Settings {
             for (String key : DB_CONFIG.keySet()) {
                 if (db.containsKey(key)) {
                     if ("port".equals(key)) {
-                        DB_CONFIG.put(key, Integer.parseInt(db.get(key).trim()));
+                        DB_CONFIG.put(key, parseIntSafe(db.get(key), 3306));
                     } else {
                         DB_CONFIG.put(key, db.get(key));
                     }
@@ -341,10 +358,10 @@ public final class Settings {
         }
         String raw;
         if ((raw = envRaw("WRITE_BACK")) != null) { RunConfig.WRITE_BACK = toBool(raw); ENV_OVERRIDES.add("WRITE_BACK"); }
-        if ((raw = envRaw("TIMEOUT")) != null) { RunConfig.TIMEOUT = Integer.parseInt(raw.trim()); ENV_OVERRIDES.add("TIMEOUT"); }
+        if ((raw = envRaw("TIMEOUT")) != null) { RunConfig.TIMEOUT = parseIntSafe(raw, RunConfig.TIMEOUT); ENV_OVERRIDES.add("TIMEOUT"); }
         if ((raw = envRaw("VERIFY")) != null) { RunConfig.VERIFY = toBool(raw); ENV_OVERRIDES.add("VERIFY"); }
         if ((raw = envRaw("SMOKE")) != null) { RunConfig.SMOKE_ONLY = toBool(raw); ENV_OVERRIDES.add("SMOKE"); }
-        if ((raw = envRaw("REPORT_TYPE")) != null) { RunConfig.REPORT_TYPE = raw.trim().toLowerCase(); ENV_OVERRIDES.add("REPORT_TYPE"); }
+        if ((raw = envRaw("REPORT_TYPE")) != null) { RunConfig.REPORT_TYPE = trimSafe(raw).toLowerCase(); ENV_OVERRIDES.add("REPORT_TYPE"); }
 
         // LogConfig
         if ((raw = envRaw("LOG_LEVEL")) != null) LogConfig.LEVEL = raw.trim().toUpperCase();
@@ -355,11 +372,11 @@ public final class Settings {
         if ((raw = envRaw("REPORT_TITLE")) != null) ReportConfig.TITLE = raw;
         if ((raw = envRaw("REPORT_PROJECT")) != null) ReportConfig.PROJECT = raw;
         if ((raw = envRaw("REPORT_HTML_NAME")) != null) ReportConfig.HTML_NAME = raw;
-        if ((raw = envRaw("ALLURE_MAX_ATTACH_LEN")) != null) ReportConfig.MAX_ATTACH_LEN = Integer.parseInt(raw.trim());
+        if ((raw = envRaw("ALLURE_MAX_ATTACH_LEN")) != null) ReportConfig.MAX_ATTACH_LEN = parseIntSafe(raw, ReportConfig.MAX_ATTACH_LEN);
 
         // AuthConfig
-        if ((raw = envRaw("OAUTH2_REFRESH_AHEAD")) != null) AuthConfig.REFRESH_AHEAD = Integer.parseInt(raw.trim());
-        if ((raw = envRaw("OAUTH2_TOKEN_TIMEOUT")) != null) AuthConfig.TOKEN_TIMEOUT = Integer.parseInt(raw.trim());
+        if ((raw = envRaw("OAUTH2_REFRESH_AHEAD")) != null) AuthConfig.REFRESH_AHEAD = parseIntSafe(raw, AuthConfig.REFRESH_AHEAD);
+        if ((raw = envRaw("OAUTH2_TOKEN_TIMEOUT")) != null) AuthConfig.TOKEN_TIMEOUT = parseIntSafe(raw, AuthConfig.TOKEN_TIMEOUT);
         if ((raw = envRaw("OAUTH2_TOKEN_VERIFY")) != null) AuthConfig.TOKEN_VERIFY = toBool(raw);
 
         // DB config
@@ -374,7 +391,7 @@ public final class Settings {
             String v = envRaw(e.getKey());
             if (v != null) {
                 if ("port".equals(e.getValue())) {
-                    DB_CONFIG.put(e.getValue(), Integer.parseInt(v.trim()));
+                    DB_CONFIG.put(e.getValue(), parseIntSafe(v, 3306));
                 } else {
                     DB_CONFIG.put(e.getValue(), v);
                 }

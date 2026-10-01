@@ -74,7 +74,13 @@ public class BaseApi {
     // 一、URL 组装
     // ==================================================================
     private String fullUrl(Object path, String host) {
+        if (path == null) {
+            throw new IllegalArgumentException("请求路径不能为空");
+        }
         String p = String.valueOf(path);
+        if (p.isEmpty()) {
+            throw new IllegalArgumentException("请求路径不能为空");
+        }
         if (p.toLowerCase().startsWith("http://") || p.toLowerCase().startsWith("https://")) {
             return p;
         }
@@ -232,7 +238,13 @@ public class BaseApi {
     // ==================================================================
     public boolean checkStatus(int expectedCode) {
         Object actual = res != null ? res.get("code") : null;
-        if (actual == null || Integer.parseInt(String.valueOf(actual)) != expectedCode) {
+        int actualInt;
+        try {
+            actualInt = actual == null ? -1 : Integer.parseInt(String.valueOf(actual).trim());
+        } catch (NumberFormatException e) {
+            actualInt = -1;
+        }
+        if (actualInt != expectedCode) {
             throw new AssertionError("HTTP 状态码断言失败：期望 " + expectedCode + "，实际 " + actual);
         }
         return true;
@@ -433,8 +445,12 @@ public class BaseApi {
             headers.put("Content-Type", String.valueOf(ct));
         }
 
+        Object methodObj = caseData.get("method");
+        if (methodObj == null || String.valueOf(methodObj).trim().isEmpty()) {
+            throw new IllegalArgumentException("用例缺少必填字段 method：" + caseData.get("id"));
+        }
         res = request(
-                String.valueOf(caseData.get("method")),
+                String.valueOf(methodObj),
                 caseData.get("url"),
                 Base.safeLoads(caseData.get("request_body"), null),
                 headers,
@@ -466,7 +482,8 @@ public class BaseApi {
         try {
             doRequest(caseData);
             Object rel = caseData.get("relation");
-            extract(rel != null ? String.valueOf(rel) : (String) caseData.get("extract"));
+            if (rel == null) rel = caseData.get("extract");
+            extract(rel != null ? String.valueOf(rel) : null);
             checkExpects(caseData.get("expects"));
             if (Base.toBool(caseData.get("check_business"), true)) {
                 checkSuccess(caseData.get("expected_code"), "");
