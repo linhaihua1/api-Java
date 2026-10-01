@@ -38,11 +38,15 @@ public class ExcelUtil {
     }
 
     private static Workbook getWorkbook() throws IOException {
-        if (cachedWorkbook == null) {
-            File file = new File(Settings.EXCEL_FILE);
-            cachedFile = file;
-            if (file.exists()) {
-                try (FileInputStream fis = new FileInputStream(file)) {
+        File currentFile = new File(Settings.EXCEL_FILE);
+        // 若文件路径变化或缓存失效，重新加载
+        if (cachedWorkbook == null || cachedFile == null || !cachedFile.equals(currentFile)) {
+            if (cachedWorkbook != null) {
+                try { cachedWorkbook.close(); } catch (IOException ignored) {}
+            }
+            cachedFile = currentFile;
+            if (currentFile.exists()) {
+                try (FileInputStream fis = new FileInputStream(currentFile)) {
                     cachedWorkbook = new XSSFWorkbook(fis);
                 }
             } else {
