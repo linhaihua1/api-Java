@@ -37,6 +37,9 @@ public class TestExcelDriver {
             return Stream.empty();
         }
 
+        // 自动创建模板（首次运行）
+        ExcelUtil.createTemplateIfAbsent();
+
         List<Map<String, Object>> cases = ExcelUtil.readCases();
         if (cases.isEmpty()) {
             logger.warn("Excel 用例为空或未找到 sheet: {}", Settings.RunConfig.SHEET_NAME);
@@ -56,15 +59,36 @@ public class TestExcelDriver {
             filtered = cases;
         }
 
+        // 记录每条用例的 Excel 行号（表头占第 0 行，数据从第 1 行开始）
+        // filtered 中的用例顺序与 Excel 行顺序一致，但需回查原始列表获取行号
+        Map<String, Integer> idToRow = new LinkedHashMap<>();
+        for (int i = 0; i < cases.size(); i++) {
+            Object id = cases.get(i).get("id");
+            if (id != null) idToRow.put(String.valueOf(id), i + 1);
+        }
+
         return filtered.stream().map(caze -> {
             String id = String.valueOf(caze.getOrDefault("id", "case"));
             String title = String.valueOf(caze.getOrDefault("title", caze.getOrDefault("url", "case")));
             String displayName = "id" + id + "[" + title + "]";
+            int excelRow = idToRow.getOrDefault(id, -1);
             return dynamicTest(displayName, () -> {
+                boolean isPass = false;
+                String errMsg = "";
                 try {
                     apiClient.runCase(caze);
+                    isPass = true;
                 } catch (CaseSkipped e) {
                     org.junit.jupiter.api.Assumptions.assumeTrue(false, e.getMessage());
+                } catch (AssertionError | Exception e) {
+                    errMsg = e.getClass().getSimpleName() + ": " + e.getMessage();
+                    throw e;
+                } finally {
+                    if (excelRow >= 0 && Settings.RunConfig.WRITE_BACK) {
+                        ExcelUtil.writeBackByName(excelRow, "result", isPass ? "pass" : "fail");
+                        if (!isPass) ExcelUtil.writeBackByName(excelRow, "error", errMsg);
+                        ExcelUtil.flush();
+                    }
                 }
             });
         });

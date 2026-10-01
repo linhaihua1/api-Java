@@ -122,6 +122,7 @@ public final class Constants {
     public static final String FIELD_METHOD = "method";
     public static final String FIELD_URL = "url";
     public static final String FIELD_HEADERS = "headers";
+    public static final String FIELD_PARAMS = "params";
     public static final String FIELD_COOKIES = "cookies";
     public static final String FIELD_REQUEST_BODY = "request_body";
     public static final String FIELD_CONTENT_TYPE = "content_type";

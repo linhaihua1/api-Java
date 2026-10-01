@@ -1,5 +1,6 @@
 package com.amsapi.utils;
 
+import com.amsapi.common.Constants;
 import com.amsapi.config.Settings;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -19,6 +20,19 @@ public class ExcelUtil {
     private static Workbook cachedWorkbook;
     private static File cachedFile;
     private static final Map<Integer, Map<Integer, Object>> pendingWrites = new LinkedHashMap<>();
+
+    /** Excel 用例标准列顺序（对齐 Python 版） */
+    public static final String[] TEMPLATE_HEADERS = {
+            Constants.FIELD_ID, Constants.FIELD_TITLE, Constants.FIELD_TAGS,
+            Constants.FIELD_METHOD, Constants.FIELD_URL, Constants.FIELD_HEADERS,
+            Constants.FIELD_REQUEST_BODY, Constants.FIELD_PARAMS,
+            Constants.FIELD_COOKIES, Constants.FIELD_CONTENT_TYPE,
+            Constants.FIELD_HOST, Constants.FIELD_EXPECTED_CODE,
+            Constants.FIELD_EXPECTS, Constants.FIELD_RELATION,
+            Constants.FIELD_DEPENDS, Constants.FIELD_SETUP,
+            Constants.FIELD_TEARDOWN, Constants.FIELD_CHECK_BUSINESS,
+            "result", "error"
+    };
 
     private ExcelUtil() {
     }
@@ -141,5 +155,61 @@ public class ExcelUtil {
             try { cachedWorkbook.close(); } catch (IOException ignored) {}
             cachedWorkbook = null;
         }
+    }
+
+    /**
+     * 创建标准 Excel 模板文件（含表头 + 示例行）。
+     * 文件不存在时才创建，已存在则跳过。
+     */
+    public static synchronized void createTemplateIfAbsent() throws IOException {
+        File file = new File(Settings.EXCEL_FILE);
+        if (file.exists()) return;
+        file.getParentFile().mkdirs();
+        try (Workbook wb = new XSSFWorkbook();
+             FileOutputStream fos = new FileOutputStream(file)) {
+            Sheet sheet = wb.createSheet(Settings.RunConfig.SHEET_NAME);
+            // 表头
+            Row header = sheet.createRow(0);
+            CellStyle bold = wb.createCellStyle();
+            Font font = wb.createFont();
+            font.setBold(true);
+            bold.setFont(font);
+            for (int i = 0; i < TEMPLATE_HEADERS.length; i++) {
+                Cell c = header.createCell(i);
+                c.setCellValue(TEMPLATE_HEADERS[i]);
+                c.setCellStyle(bold);
+                sheet.setColumnWidth(i, 4000);
+            }
+            // 示例行
+            Row sample = sheet.createRow(1);
+            String[] sampleRow = {
+                    "1001", "登录并提取票据", "smoke",
+                    "get", "/v1/users/login",
+                    "{\"Content-Type\":\"application/json\"}",
+                    "{\"username\":\"demo_user\",\"password\":\"demo_password\"}",
+                    "", "", "", "", "200",
+                    "type:body.data=dict; not_empty:body.data.ticket",
+                    "ticket=body.data.ticket", "", "", "", "true", "", ""
+            };
+            for (int i = 0; i < sampleRow.length; i++) {
+                sample.createCell(i).setCellValue(sampleRow[i]);
+            }
+            wb.write(fos);
+            logger.info("已创建 Excel 模板：{}", file.getAbsolutePath());
+        }
+    }
+
+    /**
+     * 按列名回写结果到指定行。
+     */
+    public static void writeBackByName(int rowIndex, String colName, Object value) {
+        String[] headers = TEMPLATE_HEADERS;
+        for (int i = 0; i < headers.length; i++) {
+            if (headers[i].equals(colName)) {
+                writeBack(rowIndex, i, value);
+                return;
+            }
+        }
+        logger.warn("回写列名不存在：{}", colName);
     }
 }
